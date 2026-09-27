@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 
 export async function processSale(data: {
   items: { productoId: string; cantidad: number; precioVenta: number }[];
-  metodoPago: string;
+  metodoPago: "Efectivo" | "Pago x Móvil" | "";
 }) {
   try {
     await connectDB();
@@ -78,9 +78,50 @@ export async function processSale(data: {
     revalidatePath("/admin/sales");
     revalidatePath("/admin");
     
-    return { success: true, saleId: newSale._id.toString() };
+    return { success: true, saleId: (newSale as any)._id.toString() };
   } catch (error: any) {
     console.error("Error processing sale:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function refundSale(saleId: string) {
+  try {
+    await connectDB();
+    const sale = await Sale.findById(saleId);
+    if (!sale) throw new Error("Venta no encontrada");
+    if (sale.estadoVenta === "Reembolsada") throw new Error("Venta ya fue reembolsada");
+
+    // Restore stock in Tienda and Batches
+    for (const item of sale.items) {
+      const product = await Product.findById(item.productoId);
+      if (product) {
+        product.stockTienda += item.cantidad;
+        await product.save();
+      }
+      
+      // Because we used FIFO, restoring batches exactly is complex.
+      // The easiest robust way is to create a NEW batch with the returned quantity
+      // using the average calculated cost for this specific item in this sale.
+      const avgCost = item.costoCalculadoDesdeLotes / item.cantidad;
+      await Batch.create({
+        productoId: item.productoId,
+        cantidadInicial: item.cantidad,
+        cantidadRestante: item.cantidad,
+        costoUnitario: avgCost || 0,
+        fechaEntrada: new Date()
+      });
+    }
+
+    sale.estadoVenta = "Reembolsada";
+    await sale.save();
+
+    revalidatePath("/admin/sales");
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error refunding sale:", error);
     return { success: false, error: error.message };
   }
 }

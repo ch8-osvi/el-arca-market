@@ -1,5 +1,6 @@
 import connectDB from "@/lib/db";
 import { Sale } from "@/models/Sale";
+import RefundButton from "@/components/RefundButton";
 import { Expense } from "@/models/Expense";
 
 export const dynamic = "force-dynamic";
@@ -103,7 +104,10 @@ export default async function SalesPage({
                       </div>
                     </td>
                     <td className="py-2.5">
-                      <span className="text-[9px] border border-white/10 px-1.5 py-0.5 rounded uppercase font-bold text-white/60">{s.metodoPago}</span>
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className={`text-[9px] border px-1.5 py-0.5 rounded uppercase font-bold ${s.estadoVenta === 'Reembolsada' ? 'border-red-500/20 text-red-400 bg-red-500/10' : 'border-white/10 text-white/60'}`}>{s.metodoPago} {s.estadoVenta === 'Reembolsada' && '(Reembolso)'}</span>
+                        {s.estadoVenta !== 'Reembolsada' && <RefundButton saleId={s._id.toString()} />}
+                      </div>
                     </td>
                     <td className="py-2.5 text-right text-white/50">${costoTotal.toFixed(2)}</td>
                     <td className="py-2.5 text-right font-bold text-sm">${s.total.toFixed(2)}</td>

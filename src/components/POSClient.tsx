@@ -8,7 +8,7 @@ export default function POSClient({ initialProducts }: { initialProducts: any[] 
   const [cart, setCart] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCat, setFilterCat] = useState("");
-  const [payMethod, setPayMethod] = useState("Efectivo");
+  const [payMethod, setPayMethod] = useState<"Efectivo" | "Pago x Móvil" | "">("Efectivo");
   const [loading, setLoading] = useState(false);
 
   const filteredProducts = products.filter(p => {
