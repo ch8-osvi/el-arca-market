@@ -124,14 +124,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="flex h-screen bg-[var(--color-obsidian)] overflow-hidden font-sans text-sm">
       {/* Admin Sidebar */}
       <aside className="w-56 glass-card m-3 flex flex-col overflow-hidden shrink-0 border-white/10 rounded-xl">
-        {/* Header: brand on top, ADMIN PANEL subtitle */}
+        {/* Header: El Arca Market grande gold, ADMIN PANEL subtítulo muted */}
         <div className="p-4 border-b border-white/5 flex flex-col gap-0.5">
-          <p className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-[0.25em] font-bold">
-            El Arca Market
-          </p>
           <h2 className="text-lg font-black tracking-tight">
-            ADMIN <span className="gold-gradient-text">PANEL</span>
+            El Arca <span className="gold-gradient-text">Market</span>
           </h2>
+          <p className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-[0.25em] font-bold">
+            Admin Panel
+          </p>
         </div>
 
         <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
