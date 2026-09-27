@@ -1,6 +1,7 @@
 import connectDB from "@/lib/db";
 import { Sale } from "@/models/Sale";
 import { Product } from "@/models/Product";
+import { Expense } from "@/models/Expense";
 
 export const dynamic = "force-dynamic";
 
@@ -15,19 +16,28 @@ export default async function AdminDashboard() {
 
   // Fetch today's sales
   const salesToday = await Sale.find({
-    fecha: { $gte: today, $lt: tomorrow },
-    estadoVenta: "Completada"
+    fecha: { $gte: today, $lt: tomorrow }
   }).populate("items.productoId", "nombre");
 
+  // Fetch today's expenses
+  const expensesToday = await Expense.find({
+    fecha: { $gte: today, $lt: tomorrow }
+  });
+
   let ventasHoy = 0;
-  let gananciaHoy = 0;
+  let gananciaBrutaHoy = 0;
+  let gastosHoy = expensesToday.reduce((acc: number, curr: any) => acc + curr.monto, 0);
 
   salesToday.forEach((s: any) => {
-    ventasHoy += s.total;
-    s.items.forEach((item: any) => {
-      gananciaHoy += (item.precioVenta * item.cantidad) - item.costoCalculadoDesdeLotes;
-    });
+    if (s.estadoVenta === "Completada" && s.estado === "Pagado") {
+      ventasHoy += s.total;
+      s.items.forEach((item: any) => {
+        gananciaBrutaHoy += (item.precioVenta * item.cantidad) - item.costoCalculadoDesdeLotes;
+      });
+    }
   });
+
+  let gananciaHoy = gananciaBrutaHoy - gastosHoy;
 
   // Fetch low stock items (stockTienda < 5)
   const lowStockProductsRaw = await Product.find({ stockTienda: { $lt: 5 } }).limit(5);

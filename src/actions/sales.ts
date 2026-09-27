@@ -133,3 +133,25 @@ export async function refundSale(saleId: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function markAsPaid(saleId: string) {
+  try {
+    await connectDB();
+    const sale = await Sale.findById(saleId);
+    if (!sale) throw new Error("Venta no encontrada");
+    
+    if (sale.estado === "Pagado") {
+      throw new Error("La venta ya está pagada");
+    }
+
+    sale.estado = "Pagado";
+    await sale.save();
+
+    revalidatePath("/admin/sales");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error marking as paid:", error);
+    return { success: false, error: error.message };
+  }
+}

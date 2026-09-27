@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { getProducts } from "@/actions/inventory";
-import AddProductForm from "@/components/AddProductForm";
-import ProductDeleteButton from "@/components/ProductDeleteButton";
+import AddProductForm from '@/components/admin/AddProductForm';
+import ProductDeleteButton from '@/components/admin/ProductDeleteButton';
+import EditProductButton from '@/components/admin/EditProductButton';
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +27,9 @@ export default async function ProductsPage({
       <div className="flex items-center justify-between shrink-0">
         <h1 className="text-xl font-black tracking-tight">Catálogo de Productos</h1>
         <div className="flex gap-2 bg-white/5 p-1 rounded-lg">
-          <a href="/admin/products?tab=todos" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${tab === "todos" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>Todos</a>
-          <a href="/admin/products?tab=con-stock" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${tab === "con-stock" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>Con Stock</a>
-          <a href="/admin/products?tab=agotados" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${tab === "agotados" ? "bg-red-500/20 text-red-400" : "text-white/50 hover:text-white"}`}>Agotados</a>
+          <Link href="/admin/products?tab=todos" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${tab === "todos" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>Todos</Link>
+          <Link href="/admin/products?tab=con-stock" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${tab === "con-stock" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>Con Stock</Link>
+          <Link href="/admin/products?tab=agotados" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${tab === "agotados" ? "bg-red-500/20 text-red-400" : "text-white/50 hover:text-white"}`}>Agotados</Link>
         </div>
       </div>
 
@@ -55,23 +57,31 @@ export default async function ProductsPage({
                   <div key={p._id} className="bg-white/[0.02] border border-white/5 rounded-xl p-3 flex flex-col gap-2 hover:border-[#D4AF37]/30 hover:bg-white/[0.04] transition-colors relative group overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     <ProductDeleteButton productId={p._id} productName={p.nombre} />                    
-                    <div className="flex items-start justify-between relative z-10">
-                      <div className="flex flex-col max-w-[70%]">
+                    <div className="flex items-start gap-3 relative z-10">
+                      <div className="w-12 h-12 rounded-lg bg-[#090A0F]/50 border border-white/5 flex items-center justify-center shrink-0 overflow-hidden">
+                        {p.imagenUrl ? (
+                          <img src={p.imagenUrl} alt={p.nombre} className="w-full h-full object-cover opacity-90" />
+                        ) : (
+                          <span className="text-white/20 text-xs">📦</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0 pr-6">
                         <span className="font-bold text-sm text-white/90 truncate">{p.nombre}</span>
                         <span className="text-[9px] uppercase font-bold tracking-wider text-[var(--color-text-muted)]">{p.categoria}</span>
+                        <span className="font-black text-[#E5C158] text-sm mt-1">${p.precioVenta} CUP</span>
                       </div>
-                      <span className="font-black text-[#E5C158] text-sm">${p.precioVenta} CUP</span>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-2 mt-1 pt-2 border-t border-white/5 relative z-10">
-                      <div className="flex flex-col">
+                    <div className="flex items-center gap-2 mt-1 pt-2 border-t border-white/5 relative z-10">
+                      <div className="flex flex-col flex-1 bg-white/[0.02] rounded px-2 py-1">
                         <span className="text-[9px] uppercase text-white/40 font-bold tracking-wider">Tienda</span>
-                        <span className="font-bold text-xs">{p.stockTienda}</span>
+                        <span className={`font-bold text-xs ${p.stockTienda > 0 ? "text-white" : "text-red-400"}`}>{p.stockTienda}</span>
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col flex-1 bg-white/[0.02] rounded px-2 py-1">
                         <span className="text-[9px] uppercase text-white/40 font-bold tracking-wider">Almacén</span>
                         <span className="font-bold text-xs text-[#8E94A5]">{p.stockAlmacen}</span>
                       </div>
+                      <EditProductButton productStr={JSON.stringify(p)} />
                     </div>
                   </div>
                 ))}

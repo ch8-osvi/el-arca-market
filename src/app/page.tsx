@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getProducts } from "@/actions/inventory";
-import POSClient from "@/components/POSClient";
+import POSClient from '@/components/pos/POSClient';
 
 export const dynamic = "force-dynamic";
 
