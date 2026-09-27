@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --color-obsidian: #090A0F;
+  --color-surface: #11141F;
+  --color-gold: #D4AF37;
+  --color-gold-light: #E5C158;
+  --color-gold-accent: #F3E0A9;
+  --color-text-muted: #8E94A5;
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-obsidian);
+    color: white;
+    background-image: radial-gradient(circle at 15% 15%, rgba(212, 175, 55, 0.04) 0%, transparent 40%);
+    background-attachment: fixed;
+    /* Smooth fonts */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background-color: rgba(17, 20, 31, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(212, 175, 55, 0.12);
+    border-radius: 1rem;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .glass-card:hover {
+    border-color: rgba(212, 175, 55, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px -2px rgba(212, 175, 55, 0.15);
+  }
+
+  .glass-panel {
+    background-color: rgba(15, 18, 28, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 1.5rem;
+  }
+
+  .gold-gradient-text {
+    background: linear-gradient(135deg, #FFF6D6 0%, #E5C158 40%, #D4AF37 70%, #AA8826 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Status Badges */
+  .badge-base {
+    @apply rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0F17;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.4);
+}
