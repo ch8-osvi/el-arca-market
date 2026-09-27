@@ -9,12 +9,19 @@ import { revalidatePath } from "next/cache";
 export async function processSale(data: {
   items: { productoId: string; cantidad: number; precioVenta: number }[];
   metodoPago: "Efectivo" | "Pago x Móvil" | "";
+  estado: "Pagado" | "Pendiente";
+  notas: string;
 }) {
   try {
     await connectDB();
-    
+
     let totalSale = 0;
-    const finalItems = [];
+    const finalItems: {
+      productoId: string;
+      cantidad: number;
+      precioVenta: number;
+      costoCalculadoDesdeLotes: number;
+    }[] = [];
 
     // Loop through each product sold
     for (const item of data.items) {
@@ -69,7 +76,8 @@ export async function processSale(data: {
       items: finalItems,
       total: totalSale,
       metodoPago: data.metodoPago,
-      estado: "Pagado",
+      estado: data.estado,
+      notas: data.notas,
       estadoVenta: "Completada"
     });
 

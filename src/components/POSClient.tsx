@@ -9,7 +9,10 @@ export default function POSClient({ initialProducts }: { initialProducts: any[] 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCat, setFilterCat] = useState("");
   const [payMethod, setPayMethod] = useState<"Efectivo" | "Pago x Móvil" | "">("Efectivo");
+  const [saleStatus, setSaleStatus] = useState<"Pagado" | "Pendiente">("Pagado");
+  const [notas, setNotas] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase());
@@ -24,7 +27,6 @@ export default function POSClient({ initialProducts }: { initialProducts: any[] 
       alert("No hay stock en tienda para este producto.");
       return;
     }
-    
     const existing = cart.find(i => i.product._id === product._id);
     if (existing) {
       if (existing.cantidad >= product.stockTienda) {
@@ -51,20 +53,19 @@ export default function POSClient({ initialProducts }: { initialProducts: any[] 
       precioVenta: i.product.precioVenta
     }));
 
-    const res = await processSale({ items, metodoPago: payMethod });
-    
+    const res = await processSale({ items, metodoPago: payMethod, estado: saleStatus, notas });
+
     if (res.success) {
-      alert("Venta procesada con éxito!");
-      // Optimistically update stock
+      setSuccessMsg(saleStatus === "Pendiente" ? "Orden pendiente guardada." : "Venta procesada con éxito!");
       const updatedProducts = products.map(p => {
         const soldItem = cart.find(c => c.product._id === p._id);
-        if (soldItem) {
-          return { ...p, stockTienda: p.stockTienda - soldItem.cantidad };
-        }
+        if (soldItem) return { ...p, stockTienda: p.stockTienda - soldItem.cantidad };
         return p;
       });
       setProducts(updatedProducts);
       setCart([]);
+      setNotas("");
+      setTimeout(() => setSuccessMsg(""), 3000);
     } else {
       alert("Error: " + res.error);
     }
@@ -72,42 +73,47 @@ export default function POSClient({ initialProducts }: { initialProducts: any[] 
   };
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-4 gap-4 relative z-10">
+    <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-3 gap-3 relative z-10">
       {/* Left Side: Products Grid */}
-      <div className="flex-1 glass-card flex flex-col overflow-hidden">
+      <div className="flex-1 glass-card flex flex-col overflow-hidden rounded-xl">
         {/* Search & Filters */}
-        <div className="p-4 border-b border-white/5 flex flex-col sm:flex-row gap-4">
+        <div className="p-3 border-b border-white/5 flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar productos..." 
-              className="w-full bg-[#090A0F]/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#D4AF37]/50 transition-colors"
+              placeholder="Buscar productos..."
+              className="w-full bg-[#090A0F]/50 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#D4AF37]/50 transition-colors"
             />
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-            <button onClick={() => setFilterCat("")} className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors whitespace-nowrap ${filterCat === "" ? "bg-[#D4AF37]/20 text-[#E5C158] border-[#D4AF37]/30" : "bg-white/5 text-white/70 border-white/5"}`}>Todos</button>
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 sm:pb-0">
+            <button onClick={() => setFilterCat("")} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors whitespace-nowrap ${filterCat === "" ? "bg-[#D4AF37]/20 text-[#E5C158] border-[#D4AF37]/30" : "bg-white/5 text-white/60 border-white/5"}`}>Todos</button>
             {["Aseo", "Confitura", "Básicos", "Bebidas", "Otros"].map(cat => (
-              <button key={cat} onClick={() => setFilterCat(cat)} className={`px-4 py-2.5 rounded-xl text-sm border transition-colors whitespace-nowrap ${filterCat === cat ? "bg-[#D4AF37]/20 text-[#E5C158] border-[#D4AF37]/30 font-bold" : "bg-white/5 text-white/70 border-white/5"}`}>{cat}</button>
+              <button key={cat} onClick={() => setFilterCat(cat)} className={`px-3 py-1.5 rounded-lg text-xs border transition-colors whitespace-nowrap ${filterCat === cat ? "bg-[#D4AF37]/20 text-[#E5C158] border-[#D4AF37]/30 font-bold" : "bg-white/5 text-white/60 border-white/5"}`}>{cat}</button>
             ))}
           </div>
         </div>
-        
+
         {/* Grid */}
-        <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+        <div className="flex-1 overflow-y-auto p-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5">
           {filteredProducts.map((p) => (
-            <div key={p._id} onClick={() => addToCart(p)} className="bg-white/[0.02] border border-white/5 rounded-2xl p-2 flex flex-col gap-2 hover:border-[#D4AF37]/40 hover:bg-white/[0.04] transition-all cursor-pointer group">
-              <div className="h-24 sm:h-28 bg-[#090A0F]/50 rounded-xl flex items-center justify-center border border-white/5 relative overflow-hidden">
+            <div key={p._id} onClick={() => addToCart(p)} className={`bg-white/[0.02] border rounded-xl p-2 flex flex-col gap-2 transition-all cursor-pointer group ${p.stockTienda === 0 ? "border-red-500/10 opacity-50 cursor-not-allowed" : "border-white/5 hover:border-[#D4AF37]/40 hover:bg-white/[0.04]"}`}>
+              <div className="h-20 bg-[#090A0F]/50 rounded-lg flex items-center justify-center border border-white/5 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="text-white/20 text-3xl group-hover:scale-110 group-hover:text-[#D4AF37]/40 transition-all duration-300">📦</span>
+                <span className="text-white/20 text-2xl group-hover:scale-110 group-hover:text-[#D4AF37]/40 transition-all duration-300">📦</span>
+                {p.stockTienda === 0 && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
+                    <span className="text-[9px] font-bold text-red-400 uppercase tracking-wider">Agotado</span>
+                  </div>
+                )}
               </div>
-              <div className="flex flex-col px-1 pb-1">
+              <div className="flex flex-col px-0.5">
                 <span className="text-xs font-bold text-white/90 truncate">{p.nombre}</span>
-                <div className="flex items-center justify-between mt-1.5">
+                <div className="flex items-center justify-between mt-1">
                   <span className="text-[#E5C158] font-black text-sm tracking-tight">${p.precioVenta}</span>
                   <span className={`text-[9px] px-1.5 py-0.5 rounded border ${p.stockTienda > 0 ? "bg-[#090A0F] text-white/50 border-white/10" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
-                    STOCK: {p.stockTienda}
+                    {p.stockTienda}
                   </span>
                 </div>
               </div>
@@ -120,64 +126,104 @@ export default function POSClient({ initialProducts }: { initialProducts: any[] 
       </div>
 
       {/* Right Side: Cart */}
-      <div className="w-full md:w-80 lg:w-96 glass-card flex flex-col overflow-hidden h-[400px] md:h-auto shrink-0">
-        <div className="p-5 border-b border-white/5 flex items-center justify-between">
-          <h2 className="font-extrabold text-lg tracking-tight">Orden Actual</h2>
+      <div className="w-full md:w-72 lg:w-80 glass-card flex flex-col overflow-hidden h-[420px] md:h-auto shrink-0 rounded-xl">
+        <div className="p-4 border-b border-white/5 flex items-center justify-between">
+          <h2 className="font-extrabold text-base tracking-tight">Orden Actual</h2>
           {cart.length > 0 && (
-            <button onClick={() => setCart([])} className="text-white/30 hover:text-white/70 text-sm">Vaciar</button>
+            <button onClick={() => setCart([])} className="text-white/30 hover:text-white/70 text-xs">Vaciar</button>
           )}
         </div>
-        
+
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2.5">
-           {cart.length === 0 ? (
-             <div className="flex items-center justify-center h-full">
-               <span className="text-white/30 text-sm font-medium">No hay productos en la orden</span>
-             </div>
-           ) : (
-             cart.map((item, idx) => (
-               <div key={idx} className="flex items-center justify-between bg-white/[0.02] p-3 rounded-xl border border-white/5 hover:bg-white/[0.04] transition-colors group">
-                 <div className="flex flex-col">
-                   <span className="text-sm font-bold text-white/90">{item.product.nombre}</span>
-                   <span className="text-xs text-[#E5C158] font-black tracking-tight">${item.product.precioVenta} x {item.cantidad}</span>
-                 </div>
-                 <div className="flex items-center gap-3">
-                   <span className="font-bold text-sm text-white/90">${item.product.precioVenta * item.cantidad}</span>
-                   <button onClick={() => removeFromCart(item.product._id)} className="text-red-400/50 group-hover:text-red-400 bg-red-400/5 group-hover:bg-red-400/10 w-6 h-6 rounded-md flex items-center justify-center transition-colors">✕</button>
-                 </div>
-               </div>
-             ))
-           )}
+        <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+          {cart.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <span className="text-white/30 text-sm font-medium">No hay productos en la orden</span>
+            </div>
+          ) : (
+            cart.map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between bg-white/[0.02] p-2.5 rounded-xl border border-white/5 hover:bg-white/[0.04] transition-colors group">
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-white/90">{item.product.nombre}</span>
+                  <span className="text-xs text-[#E5C158] font-black tracking-tight">${item.product.precioVenta} x {item.cantidad}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-white/90">${item.product.precioVenta * item.cantidad}</span>
+                  <button onClick={() => removeFromCart(item.product._id)} className="text-red-400/50 group-hover:text-red-400 bg-red-400/5 group-hover:bg-red-400/10 w-5 h-5 rounded flex items-center justify-center transition-colors text-xs">✕</button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-        
+
         {/* Cart Footer / Checkout */}
-        <div className="p-5 border-t border-white/5 bg-[#090A0F]/60 flex flex-col gap-4 shrink-0">
-          <div className="flex justify-between items-center text-2xl font-black">
-            <span>Total</span>
-            <span className="text-[#E5C158]">${subtotal} CUP</span>
+        <div className="p-4 border-t border-white/5 bg-[#090A0F]/60 flex flex-col gap-3 shrink-0">
+          {/* Total */}
+          <div className="flex justify-between items-center">
+            <span className="text-base font-black">Total</span>
+            <span className="text-[#E5C158] font-black text-xl">${subtotal} <span className="text-xs text-[#E5C158]/60 font-bold">CUP</span></span>
           </div>
-          
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            <button 
-              onClick={() => setPayMethod("Pago x Móvil")}
-              className={`py-2 rounded-xl text-sm font-bold border transition-colors ${payMethod === "Pago x Móvil" ? "bg-[#D4AF37]/20 text-[#E5C158] border-[#D4AF37]/30" : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10"}`}
-            >
-              Pago x Móvil
-            </button>
-            <button 
-              onClick={() => setPayMethod("Efectivo")}
-              className={`py-2 rounded-xl text-sm font-bold border transition-colors ${payMethod === "Efectivo" ? "bg-[#D4AF37]/20 text-[#E5C158] border-[#D4AF37]/30" : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10"}`}
-            >
-              Efectivo
-            </button>
+
+          {/* Estado: Pagado / Pendiente */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Estado de Cobro</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                onClick={() => setSaleStatus("Pagado")}
+                className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${saleStatus === "Pagado" ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10"}`}
+              >
+                ✓ Pagado
+              </button>
+              <button
+                onClick={() => setSaleStatus("Pendiente")}
+                className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${saleStatus === "Pendiente" ? "bg-amber-500/20 text-amber-400 border-amber-500/30" : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10"}`}
+              >
+                ⏳ Pendiente
+              </button>
+            </div>
           </div>
-          
-          <button 
+
+          {/* Método de Pago */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Método de Pago</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                onClick={() => setPayMethod("Efectivo")}
+                className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${payMethod === "Efectivo" ? "bg-[#D4AF37]/20 text-[#E5C158] border-[#D4AF37]/30" : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10"}`}
+              >
+                💵 Efectivo
+              </button>
+              <button
+                onClick={() => setPayMethod("Pago x Móvil")}
+                className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${payMethod === "Pago x Móvil" ? "bg-[#D4AF37]/20 text-[#E5C158] border-[#D4AF37]/30" : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10"}`}
+              >
+                📱 Transferencia
+              </button>
+            </div>
+          </div>
+
+          {/* Notas */}
+          <textarea
+            value={notas}
+            onChange={e => setNotas(e.target.value)}
+            placeholder="Nota opcional..."
+            rows={2}
+            className="bg-[#090A0F]/50 border border-white/10 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#D4AF37]/50 transition-colors resize-none text-white/80 placeholder:text-white/20"
+          />
+
+          {/* Success message */}
+          {successMsg && (
+            <div className="text-center text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg py-2">
+              {successMsg}
+            </div>
+          )}
+
+          <button
             disabled={cart.length === 0 || loading}
             onClick={handleCheckout}
-            className="w-full mt-2 py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#AA8826] text-[#090A0F] font-black text-lg hover:opacity-90 hover:scale-[1.02] transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)] disabled:opacity-50 disabled:hover:scale-100"
+            className={`w-full py-3 rounded-xl font-black text-base hover:opacity-90 hover:scale-[1.01] transition-all shadow-[0_0_15px_rgba(212,175,55,0.2)] disabled:opacity-50 disabled:hover:scale-100 ${saleStatus === "Pendiente" ? "bg-gradient-to-r from-amber-500 to-amber-700 text-[#090A0F]" : "bg-gradient-to-r from-[#D4AF37] to-[#AA8826] text-[#090A0F]"}`}
           >
-            {loading ? "Procesando..." : "Cobrar"}
+            {loading ? "Procesando..." : saleStatus === "Pendiente" ? "Guardar Pendiente" : "Cobrar"}
           </button>
         </div>
       </div>
