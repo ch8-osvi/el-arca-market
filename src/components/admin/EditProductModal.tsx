@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { editProduct } from "@/actions/inventory";
+import { uploadImage } from "@/actions/upload";
 
 export default function EditProductModal({ product, onClose }: { product: any; onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImg, setUploadingImg] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -16,7 +18,9 @@ export default function EditProductModal({ product, onClose }: { product: any; o
     const nombre = formData.get("nombre") as string;
     const categoria = formData.get("categoria") as string;
     const precioVenta = parseFloat(formData.get("precioVenta") as string);
-    const imagenUrl = formData.get("imagenUrl") as string;
+    const imageFile = formData.get("imageFile") as File;
+
+    let finalImageUrl = product.imagenUrl; // Keep old image by default
 
     if (!nombre || !categoria || isNaN(precioVenta)) {
       setError("Llena todos los campos obligatorios.");
@@ -24,7 +28,24 @@ export default function EditProductModal({ product, onClose }: { product: any; o
       return;
     }
 
-    const res = await editProduct(product._id, { nombre, categoria, precioVenta, imagenUrl });
+    if (imageFile && imageFile.size > 0) {
+      setUploadingImg(true);
+      const imgFormData = new FormData();
+      imgFormData.append("file", imageFile);
+      const uploadRes = await uploadImage(imgFormData);
+      
+      if (uploadRes.success) {
+        finalImageUrl = uploadRes.url!;
+      } else {
+        setError(`Error al subir imagen: ${uploadRes.error}`);
+        setLoading(false);
+        setUploadingImg(false);
+        return;
+      }
+      setUploadingImg(false);
+    }
+
+    const res = await editProduct(product._id, { nombre, categoria, precioVenta, imagenUrl: finalImageUrl });
     
     if (res.success) {
       onClose();
@@ -68,12 +89,15 @@ export default function EditProductModal({ product, onClose }: { product: any; o
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">URL de Imagen</label>
-            <input name="imagenUrl" defaultValue={product.imagenUrl} type="url" className="bg-[#090A0F]/50 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#D4AF37]/50 transition-colors" />
+            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Nueva Imagen (Reemplaza actual)</label>
+            <input name="imageFile" type="file" accept="image/*" className="bg-[#090A0F]/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-[#D4AF37]/50 transition-colors file:bg-[#D4AF37]/20 file:text-[#E5C158] file:border-0 file:rounded-md file:px-2 file:py-1 file:mr-3 file:font-bold file:text-[10px] hover:file:bg-[#D4AF37]/30 file:cursor-pointer" />
+            {product.imagenUrl && (
+              <a href={product.imagenUrl} target="_blank" rel="noreferrer" className="text-[9px] text-[#D4AF37] hover:underline mt-1">Ver imagen actual</a>
+            )}
           </div>
 
           <button type="submit" disabled={loading} className="mt-2 w-full py-2.5 rounded-lg bg-[#D4AF37] text-[#090A0F] font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all">
-            {loading ? "Guardando..." : "Guardar Cambios"}
+            {loading ? (uploadingImg ? "Subiendo foto..." : "Guardando...") : "Guardar Cambios"}
           </button>
         </form>
       </div>

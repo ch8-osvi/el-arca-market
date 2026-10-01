@@ -4,6 +4,7 @@ import { Sale } from "@/models/Sale";
 import RefundButton from '@/components/admin/RefundButton';
 import MarkPaidButton from '@/components/admin/MarkPaidButton';
 import { Expense } from "@/models/Expense";
+import ExportCSVButton from "@/components/admin/ExportCSVButton";
 
 export const dynamic = "force-dynamic";
 
@@ -61,13 +62,17 @@ export default async function SalesPage({
       <div className="flex items-center justify-between shrink-0 flex-wrap gap-2">
         <h1 className="text-xl font-black tracking-tight">Historial de Ventas y Finanzas</h1>
         
-        <div className="flex gap-2 bg-white/5 p-1 rounded-lg overflow-x-auto">
-          <Link href="/admin/sales?period=1" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "1" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>Hoy</Link>
-          <Link href="/admin/sales?period=7" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "7" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>7 Días</Link>
-          <Link href="/admin/sales?period=30" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "30" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>30 Días</Link>
-          <Link href="/admin/sales?period=all" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "all" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>Todo</Link>
-          <div className="w-px bg-white/10 mx-1" />
-          <Link href="/admin/sales?period=pendientes" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "pendientes" ? "bg-red-500/20 text-red-400" : "text-white/50 hover:text-white"}`}>Pendientes</Link>
+        <div className="flex gap-4 items-center">
+          <ExportCSVButton sales={sales} expenses={expenses} />
+          
+          <div className="flex gap-2 bg-white/5 p-1 rounded-lg overflow-x-auto">
+            <Link href="/admin/sales?period=1" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "1" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>Hoy</Link>
+            <Link href="/admin/sales?period=7" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "7" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>7 Días</Link>
+            <Link href="/admin/sales?period=30" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "30" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>30 Días</Link>
+            <Link href="/admin/sales?period=all" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "all" ? "bg-[#D4AF37]/20 text-[#E5C158]" : "text-white/50 hover:text-white"}`}>Todo</Link>
+            <div className="w-px bg-white/10 mx-1" />
+            <Link href="/admin/sales?period=pendientes" className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${period === "pendientes" ? "bg-red-500/20 text-red-400" : "text-white/50 hover:text-white"}`}>Pendientes</Link>
+          </div>
         </div>
       </div>
 

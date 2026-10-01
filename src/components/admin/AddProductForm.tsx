@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { createProduct } from "@/actions/inventory";
+import { uploadImage } from "@/actions/upload";
 
 export default function AddProductForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImg, setUploadingImg] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -16,9 +18,11 @@ export default function AddProductForm() {
     const nombre = formData.get("nombre") as string;
     const categoria = formData.get("categoria") as string;
     const precioVenta = parseFloat(formData.get("precioVenta") as string);
-    const imagenUrl = formData.get("imagenUrl") as string;
     const cantidadInicial = parseInt(formData.get("cantidadInicial") as string);
     const costoReferencia = parseFloat(formData.get("costoReferencia") as string);
+    const imageFile = formData.get("imageFile") as File;
+    
+    let finalImageUrl = "";
 
     if (!nombre || !categoria || isNaN(precioVenta)) {
       setError("Por favor, llena todos los campos obligatorios correctamente.");
@@ -26,11 +30,28 @@ export default function AddProductForm() {
       return;
     }
 
+    if (imageFile && imageFile.size > 0) {
+      setUploadingImg(true);
+      const imgFormData = new FormData();
+      imgFormData.append("file", imageFile);
+      const uploadRes = await uploadImage(imgFormData);
+      
+      if (uploadRes.success) {
+        finalImageUrl = uploadRes.url!;
+      } else {
+        setError(`Error al subir imagen: ${uploadRes.error}`);
+        setLoading(false);
+        setUploadingImg(false);
+        return;
+      }
+      setUploadingImg(false);
+    }
+
     const res = await createProduct({ 
       nombre, 
       categoria, 
       precioVenta, 
-      imagenUrl,
+      imagenUrl: finalImageUrl,
       cantidadInicial: isNaN(cantidadInicial) ? 0 : cantidadInicial,
       costoReferencia: isNaN(costoReferencia) ? 0 : costoReferencia
     });
@@ -83,12 +104,12 @@ export default function AddProductForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">URL de Imagen (Opcional)</label>
-        <input name="imagenUrl" type="url" className="bg-[#090A0F]/50 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#D4AF37]/50 transition-colors text-white/50" placeholder="https://ejemplo.com/foto.jpg" />
+        <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Subir Imagen (Opcional)</label>
+        <input name="imageFile" type="file" accept="image/*" className="bg-[#090A0F]/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-[#D4AF37]/50 transition-colors file:bg-[#D4AF37]/20 file:text-[#E5C158] file:border-0 file:rounded-md file:px-2 file:py-1 file:mr-3 file:font-bold file:text-[10px] hover:file:bg-[#D4AF37]/30 file:cursor-pointer" />
       </div>
 
       <button type="submit" disabled={loading} className="mt-2 w-full py-2.5 rounded-lg bg-[#D4AF37] text-[#090A0F] font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all">
-        {loading ? "Guardando..." : "Crear Producto"}
+        {loading ? (uploadingImg ? "Subiendo foto..." : "Guardando...") : "Crear Producto"}
       </button>
     </form>
   );
